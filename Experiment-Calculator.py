@@ -1,33 +1,54 @@
-import streamlit as st
-import numpy as np
-from scipy.stats import binom_test
+def get_sample_size_with_power(mu_1, std_1, mde, is_absolute_mde=False, alpha=0.05, beta = 0.2):
+    # from https://towardsdatascience.com/probing-into-minimum-sample-size-formula-derivation-and-usage-8db9a556280b
+    if is_absolute_mde:
+        # Absolute MDE
+        dmin = mde
+    else: # we always use relative at carwow
+        # Relative MDE
+        dmin = mu_1*mde
 
-def calculate_power(base_conversion_rate, daily_entrants_per_variant, num_days):
-    # Assuming a two-sided test and a significance level of 0.05
-    alpha = 0.05
+    stat_power = 1-beta
 
-    # Convert base conversion rate to the corresponding success probability
-    p_null = base_conversion_rate
-    p_alt = base_conversion_rate + (daily_entrants_per_variant / 100)
+    # Calculate the minimum required sample size 
+    n = np.ceil(
+            2*(pow(norm.ppf(1-alpha/2)+norm.ppf(stat_power),2))*pow(std_1,2) # Numerator        
+        / pow(dmin,2) # Denominator
+        )
+    
+    return n
 
-    # Calculate the number of successes needed in the alternative hypothesis
-    n_alt = daily_entrants_per_variant * num_days
 
-    # Calculate the power of the test
-    power = 1 - binom_test(n_alt, n=n_alt, p=p_null, alternative='less')
+def show_sample_size():
+    st.title("Sample Size Calculator")
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+    with col1:
+        base_conversion_rate = st.number_input("Base conversion rate (%)", min_value=0.0, max_value=100.0, value=10.0)
+    with col2:
+        daily_entrants = st.number_input("Daily entrants", min_value=0, step=1, value=1000)
+    with col3:
+        num_variants = st.number_input("Number of test groups", min_value=2, step=1, value=2)
+    with col4:
+        mde = st.number_input("MDE (%)", min_value=0, max_value=100, step=1, value=5)
+    
+    std_1 = math.sqrt((base_conversion_rate/100)*(1-base_conversion_rate/100))
 
-    return power
+    if st.button("Calculate sample size"):
+        sample_size = get_sample_size_with_power(base_conversion_rate / 100, std_1, mde / 100)
+        days_to_run = math.ceil(sample_size/(daily_entrants/num_variants))
+        st.success(f"The required number of days for the test to be powered is: {days_to_run}")
+
 
 def main():
-    st.title("Power of A/B Test Calculator")
+    show_sample_size()
 
-    base_conversion_rate = st.number_input("Base Conversion Rate (%)", min_value=0.0, max_value=100.0, value=10.0)
-    daily_entrants_per_variant = st.number_input("Daily Entrants per Variant", min_value=0, step=1, value=100)
-    num_days = st.number_input("Number of Days", min_value=1, step=1, value=7)
-
-    if st.button("Calculate Power"):
-        power = calculate_power(base_conversion_rate / 100, daily_entrants_per_variant, num_days)
-        st.success(f"The power of the test is: {power:.4f}")
 
 if __name__ == "__main__":
+    # remove the + and - buttons from number inputs
+    st.markdown("""
+        <style>
+            button.step-up {display: none;}
+            button.step-down {display: none;}
+            div[data-baseweb] {border-radius: 4px;}
+        </style>""",
+        unsafe_allow_html=True)
     main()
