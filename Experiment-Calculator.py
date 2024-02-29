@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 from scipy.stats import norm
+import math
 
 def get_sample_size_with_power(mu_1, std_1, mde, is_absolute_mde=False, alpha=0.05, beta = 0.2):
     # from https://towardsdatascience.com/probing-into-minimum-sample-size-formula-derivation-and-usage-8db9a556280b
