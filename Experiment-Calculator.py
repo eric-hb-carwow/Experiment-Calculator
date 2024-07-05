@@ -33,7 +33,7 @@ def show_sample_size():
     with col3:
         num_variants = st.number_input("Number of test groups", min_value=2, step=1, value=2)
     with col4:
-        mde = st.number_input("MDE (%)", min_value=0, max_value=100, step=1, value=5)
+        mde = st.number_input("MDE (%)", min_value=0, step=1, value=5)
     
     std_1 = math.sqrt((base_conversion_rate/100)*(1-base_conversion_rate/100))
 
